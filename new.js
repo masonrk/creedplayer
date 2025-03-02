@@ -6,6 +6,9 @@ const ytSearch = require("yt-search");
 const { YTService } = require("./services/ytService");
 require('dotenv').config();
 
+const ffmpeg = require("ffmpeg-static");
+process.env.FFMPEG_PATH = ffmpeg;
+
 const token = 'Bot ' + process.env.CLIENT_TOKEN;
 const guildId =  process.env.GUILD_ID_TT;
 
