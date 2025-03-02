@@ -1,6 +1,6 @@
 const { Client, Constants, CommandInteraction } = require("oceanic.js");
 //const ytdl = require("@distube/ytdl-core");
-const ytdl = require("youtube-dl-exec");
+const ytdl = require("yt-dlp-exec");
 const { joinVoiceChannel, createAudioResource, createAudioPlayer } = require("@discordjs/voice");
 const ytSearch = require("yt-search");
 const { YTService } = require("./services/ytService");
