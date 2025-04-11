@@ -6,8 +6,6 @@ const path = require("path");
 const queueManager = require("./queue.js"); 
 require('dotenv').config();
 
-const ffmpeg = require("ffmpeg-static");
-process.env.FFMPEG_PATH = ffmpeg;
 
 const token = 'Bot ' + process.env.CLIENT_TOKEN;
 const guildId =  process.env.GUILD_ID_TT;
@@ -316,3 +314,4 @@ async function queueCommand(interaction) {
 
 //this line must be at the very end
 client.connect();
+

@@ -18,9 +18,8 @@
     "axios": "^1.6.8",
     "discord.js": "^14.15.2",
     "dotenv": "^16.4.5",
-    "ffmpeg-static": "^5.2.0",
     "libsodium-wrappers": "^0.7.13",
-    "oceanic.js": "^1.10.4",
+    "oceanic.js": "^1.11.2",
     "youtube-dl-exec": "^3.0.12",
     "yt-dlp-exec": "^1.0.2",
     "yt-search": "^2.11.0"
