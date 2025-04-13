@@ -12,6 +12,9 @@ parentPort.on("message", async (videoUrl) => {
     const process = spawn(ytdlpPath, [
       videoUrl,
       "--dump-single-json",
+      "--no-playlist",     
+      "--no-mtime",        
+      "--no-warnings",      
       "--format", "bestaudio",
       "--extract-audio",
       "--prefer-ffmpeg",

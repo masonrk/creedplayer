@@ -17,6 +17,12 @@ const client = new Client({
   auth: token
 });
 
+audioPlayer.on(AudioPlayerStatus.Idle, () => {
+  console.log("⏭️ Track finished, playing next...");
+  queueManager.removeFromQueue();
+  playQueue(); // call only once when a song ends
+});
+
 const sleep = (delay) => new Promise((resolve) => setTimeout(resolve,delay));
 
 client.on("ready", async () => {
@@ -121,57 +127,51 @@ async function playQueue() {
   const currentTrack = queueManager.getCurrentTrack();
 
   if (!currentTrack) {
-    console.log("🚫 Queue is empty, stopping playback.");
+    console.log("🚫 Queue is empty. Nothing to play.");
     return;
   }
 
-  console.log(`🔍 Fetching: ${currentTrack.url} using Worker Thread`);
+  console.log(`🎵 Fetching audio for: ${currentTrack.url}`);
 
-  return new Promise((resolve) => {
-    const worker = new Worker(path.join(__dirname, "ytdlWorker.js"));
-    worker.postMessage(currentTrack.url);
+  const worker = new Worker(path.join(__dirname, "ytdlWorker.js"));
+  worker.postMessage(currentTrack.url);
 
-    worker.on("message", async (data) => {
-      if (data.success) {
-        currentTrack.title = data.title || "Unknown Title";
-        console.log(`🎵 Now playing: ${currentTrack.title}`);
+  worker.once("message", async (data) => {
+    worker.terminate();
 
-        try {
-            // Remove existing listeners to avoid duplicate events
-            audioPlayer.removeAllListeners(AudioPlayerStatus.Idle);
+    // ✅ Validate result from worker
+    if (!data.success || !data.url) {
+      console.error("❌ No playable URL returned from worker.");
+      queueManager.removeFromQueue();  // Skip the broken one
+      return playQueue();              // Try the next one
+    }
 
-            const audioResource = createAudioResource(data.url);
-            audioPlayer.play(audioResource);
+    try {
+      // ✅ Validate audio resource
+      const resource = createAudioResource(data.url);
+      if (!resource) throw new Error("Invalid audio resource");
 
-        
-
-          // Handle track completion properly
-          audioPlayer.on(AudioPlayerStatus.Idle, () => {
-            console.log("⏭️ Track finished, playing next...");
-            queueManager.removeFromQueue();
-            playQueue(); // Play the next track
-          });
-
-        } catch (error) {
-          console.error("❌ Error creating audio resource:", error);
+      console.log(`🎶 Now playing: ${data.title}`);
+      audioPlayer.play(resource);
+      setTimeout(() => {
+        if (audioPlayer.state.status !== AudioPlayerStatus.Playing) {
+          console.warn("⏱️ Timeout: Playback never started. Skipping track...");
           queueManager.removeFromQueue();
           playQueue();
         }
-      } else {
-        console.error("❌ Worker Thread Error:", data.error);
-        queueManager.removeFromQueue();
-        playQueue();
-      }
+      }, 10000); // 10 seconds
+    } catch (err) {
+      console.error("❌ Failed to play audio:", err);
+      queueManager.removeFromQueue(); // Skip to next track
+      playQueue();                    // Continue playback
+    }
+  });
 
-      worker.terminate();
-    });
-
-    worker.on("error", (error) => {
-      console.error("⚠️ Worker Thread Error:", error);
-      worker.terminate();
-      queueManager.removeFromQueue();
-      playQueue();
-    });
+  worker.once("error", (err) => {
+    console.error("⚠️ Worker crashed:", err);
+    worker.terminate();
+    queueManager.removeFromQueue(); // Continue if it failed
+    playQueue();
   });
 }
 
